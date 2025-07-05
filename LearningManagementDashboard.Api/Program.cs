@@ -2,8 +2,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 // Add CORS policy for frontend integration
@@ -18,7 +16,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// TODO: Add repository and service registrations in Phase 2
+// Register repositories
+builder.Services.AddSingleton<LearningManagementDashboard.Api.Repositories.Interfaces.ICourseRepository, LearningManagementDashboard.Api.Repositories.InMemoryCourseRepository>();
+builder.Services.AddSingleton<LearningManagementDashboard.Api.Repositories.Interfaces.IStudentRepository, LearningManagementDashboard.Api.Repositories.InMemoryStudentRepository>();
+builder.Services.AddSingleton<LearningManagementDashboard.Api.Repositories.Interfaces.IEnrollmentRepository, LearningManagementDashboard.Api.Repositories.InMemoryEnrollmentRepository>();
+
+// Register services
+builder.Services.AddScoped<LearningManagementDashboard.Api.Services.Interfaces.ICourseService, LearningManagementDashboard.Api.Services.CourseService>();
+builder.Services.AddScoped<LearningManagementDashboard.Api.Services.Interfaces.IEnrollmentService, LearningManagementDashboard.Api.Services.EnrollmentService>();
 
 var app = builder.Build();
 

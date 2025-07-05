@@ -59,7 +59,18 @@ LearningManagementDashboard.Api/
    dotnet run
    ```
 
-The API will be available at `https://localhost:5001` (or the port specified in launchSettings.json).
+The API will be available at `http://localhost:5091` (or the port specified in launchSettings.json).
+
+### Running Tests
+1. Navigate to the test project directory:
+   ```bash
+   cd LearningManagementDashboard.Tests
+   ```
+
+2. Run the tests:
+   ```bash
+   dotnet test
+   ```
 
 ## API Endpoints (Planned)
 
@@ -80,7 +91,7 @@ The API will be available at `https://localhost:5001` (or the port specified in 
 ## Development Status
 
 - [x] Phase 1: Project setup and architecture
-- [ ] Phase 2: Backend implementation
+- [x] Phase 2: Backend implementation
 - [ ] Phase 3: Frontend foundation
 - [ ] Phase 4: UI implementation
 - [ ] Phase 5: Integration and reporting
