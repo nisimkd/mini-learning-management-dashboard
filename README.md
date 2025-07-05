@@ -33,29 +33,41 @@ The project follows clean architecture principles with proper separation of conc
 ### Project Structure
 ```
 LearningManagementDashboard.Api/
-├── Controllers/          # API Controllers (Courses, Enrollments, Students)
-├── Services/            # Business logic with validation
+├── Controllers/          # API Controllers with FluentValidation
+├── Services/            # Business logic with AutoMapper integration
 │   └── Interfaces/      # Service contracts
 ├── Repositories/        # Data access with seed data
 │   └── Interfaces/      # Repository contracts
 ├── Models/             # Domain models
-├── DTOs/               # Data transfer objects
-├── Exceptions/         # Custom exceptions
+├── DTOs/               # Data transfer objects with validation
+├── Validators/         # FluentValidation validators
+├── Mappings/           # AutoMapper profiles
+├── Middleware/         # Custom middleware (Exception, Security)
+├── Constants/          # Centralized constants and configuration
+├── Exceptions/         # Custom exception classes
 ├── Program.cs          # Application entry point with DI
-└── appsettings.json    # Configuration
+└── appsettings.json    # Configuration with CORS settings
 
-frontend/
+src/                    # Frontend (renamed from frontend)
 ├── src/
 │   ├── components/     # Reusable UI components
 │   │   ├── layout/     # Layout components
 │   │   ├── courses/    # Course-related components
 │   │   └── enrollments/ # Enrollment-related components
 │   ├── pages/          # Main application pages
-│   ├── services/       # API communication
+│   ├── services/       # API communication with axios
+│   │   ├── api.ts      # Main API service
+│   │   └── toast.ts    # Toast notification service
+│   ├── hooks/          # Custom React hooks
+│   │   ├── useAsync.ts # Generic async operations
+│   │   ├── useCourses.ts # Course-specific hooks
+│   │   ├── useStudents.ts # Student-specific hooks
+│   │   └── useEnrollments.ts # Enrollment-specific hooks
 │   ├── types/          # TypeScript type definitions
 │   └── App.tsx         # Main application component
 ├── public/             # Static assets
-└── package.json        # Frontend dependencies
+├── package.json        # Frontend dependencies
+└── .env.local         # Environment configuration
 ```
 
 ## Getting Started
@@ -86,7 +98,7 @@ The API will be available at `http://localhost:5091`.
 ### Running the Frontend
 1. Navigate to the frontend directory:
    ```bash
-   cd frontend
+   cd src
    ```
 
 2. Install dependencies:
@@ -94,7 +106,14 @@ The API will be available at `http://localhost:5091`.
    npm install
    ```
 
-3. Start the development server:
+3. Create environment configuration:
+   ```bash
+   # Create .env.local file with:
+   REACT_APP_API_BASE_URL=http://localhost:5091/api
+   REACT_APP_ENVIRONMENT=development
+   ```
+
+4. Start the development server:
    ```bash
    npm start
    ```
@@ -134,22 +153,40 @@ The frontend will be available at `http://localhost:3000`.
 
 ## Features
 
+### Enhanced User Experience
+- **Toast Notifications** - Real-time feedback for all user actions
+- **Loading States** - Visual feedback during API operations
+- **Error Handling** - Graceful error boundaries and user-friendly messages
+- **Responsive Design** - Optimized for mobile, tablet, and desktop
+
 ### Dashboard
 - Real-time statistics (active courses, students, enrollments)
 - Recent enrollment activity
 - Quick action buttons for common tasks
+- Visual progress indicators
 
 ### Course Management
-- Create new courses with validation
+- **Robust Validation** - FluentValidation for all inputs
+- **AutoMapper Integration** - Clean data transformation
+- Create new courses with comprehensive validation
 - Edit existing courses with capacity management
-- Delete courses with enrollment checking
+- Delete courses with enrollment dependency checking
 - View course details and enrollment status
 
 ### Enrollment Management
-- Enroll students in courses
-- View enrollment status and grades
-- Remove enrollments
-- Track enrollment history
+- **Business Rule Enforcement** - Prevent duplicate enrollments
+- **Exception Handling** - Custom exceptions for business conflicts
+- Enroll students in courses with validation
+- View enrollment status and tracking
+- Remove enrollments with proper cleanup
+- Track enrollment history and analytics
+
+### Advanced API Features
+- **Global Exception Middleware** - Consistent error responses
+- **Security Headers** - Enhanced security with proper HTTP headers
+- **CORS Configuration** - Flexible cross-origin resource sharing
+- **Comprehensive Logging** - Structured logging throughout
+- **RESTful Design** - Industry-standard API patterns
 
 ### Reports
 - Course utilization analysis
@@ -170,8 +207,13 @@ The frontend will be available at `http://localhost:3000`.
 
 ### Backend
 - **.NET 9** - Web API framework
-- **ASP.NET Core** - Web framework
+- **ASP.NET Core** - Web framework  
+- **AutoMapper 12.0.1** - Object-to-object mapping
+- **FluentValidation 11.9.0** - Input validation with fluent interface
 - **In-memory storage** - Data persistence with seed data
+- **Global Exception Middleware** - Centralized error handling
+- **Security Headers Middleware** - Enhanced security
+- **CORS Configuration** - Cross-origin resource sharing
 - **OpenAPI/Swagger** - API documentation
 - **xUnit** - Unit testing framework
 - **Moq** - Mocking framework for tests
@@ -179,20 +221,53 @@ The frontend will be available at `http://localhost:3000`.
 ### Frontend
 - **React 19** - Frontend framework
 - **TypeScript** - Type-safe JavaScript
-- **React Router** - Client-side routing
-- **Axios** - HTTP client for API communication
+- **React Router 7.6.3** - Client-side routing
+- **Axios 1.10.0** - HTTP client for API communication
+- **React-Toastify 11.0.5** - Toast notifications for UX
+- **Custom Hooks** - Reusable stateful logic
+- **Environment Configuration** - .env.local setup
 - **CSS3** - Modern styling with flexbox and grid
+
+### Development Tools
+- **VS Code Tasks** - Automated build, run, and test tasks
+- **ESLint & TypeScript** - Code quality and type safety
+- **Hot Reload** - Development server with live updates
+- **Comprehensive Documentation** - README with setup guides
 
 ## Professional Development Practices
 
-This project demonstrates:
+This project demonstrates enterprise-level development practices:
+
+### Backend Architecture
 - **Clean Architecture** with clear separation of concerns
-- **Dependency Injection** for loose coupling
-- **Comprehensive Error Handling** with custom exceptions
-- **Unit Testing** with high coverage
-- **RESTful API Design** following best practices
-- **Type Safety** with TypeScript
-- **Responsive Design** for mobile and desktop
+- **Dependency Injection** for loose coupling and testability
+- **AutoMapper Integration** for clean object mapping
+- **FluentValidation** for robust input validation
+- **Global Exception Handling** with custom middleware
+- **Security Best Practices** with headers and CORS
+- **Centralized Constants** eliminating magic strings
+- **Custom Exceptions** for business rule enforcement
+
+### Frontend Architecture  
+- **Custom Hooks Pattern** for reusable stateful logic
+- **Environment Configuration** for different deployment stages
+- **Toast Notifications** for enhanced user experience
+- **Error Boundaries** for graceful error handling
+- **Type Safety** with comprehensive TypeScript usage
+- **Responsive Design** for mobile and desktop compatibility
+
+### Development Workflow
+- **Comprehensive Unit Testing** with 9 passing tests
+- **VS Code Integration** with automated tasks
+- **RESTful API Design** following industry standards
 - **Component-Based Architecture** for maintainability
-- **State Management** with React hooks
-- **Professional UI/UX** with modern design patterns
+- **State Management** with React hooks and custom patterns
+- **Professional UI/UX** with modern design principles
+- **Code Quality** with consistent styling and documentation
+
+### DevOps & Tooling
+- **Automated Build Tasks** for backend and frontend
+- **Environment-Specific Configuration** 
+- **Package Management** with version control
+- **Documentation** with comprehensive setup guides
+- **Testing Strategy** with mocking and integration tests
