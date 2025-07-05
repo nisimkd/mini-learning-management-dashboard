@@ -33,7 +33,6 @@ public class InMemoryCourseRepository : ICourseRepository
     {
         course.Id = _nextId++;
         course.CreatedAt = DateTime.UtcNow;
-        course.UpdatedAt = DateTime.UtcNow;
         
         _courses.TryAdd(course.Id, course);
         return Task.FromResult(course);
@@ -41,7 +40,6 @@ public class InMemoryCourseRepository : ICourseRepository
 
     public Task<Course> UpdateAsync(Course course)
     {
-        course.UpdatedAt = DateTime.UtcNow;
         _courses.TryUpdate(course.Id, course, _courses[course.Id]);
         return Task.FromResult(course);
     }
@@ -63,35 +61,23 @@ public class InMemoryCourseRepository : ICourseRepository
             new Course
             {
                 Id = _nextId++,
-                Title = "Introduction to Programming",
+                Name = "Introduction to Programming",
                 Description = "Learn the fundamentals of programming with C#",
-                Code = "CS101",
-                MaxCapacity = 30,
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                UpdatedAt = DateTime.UtcNow.AddDays(-30),
-                IsActive = true
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
             },
             new Course
             {
                 Id = _nextId++,
-                Title = "Web Development Basics",
+                Name = "Web Development Basics",
                 Description = "Introduction to HTML, CSS, and JavaScript",
-                Code = "WD101",
-                MaxCapacity = 25,
-                CreatedAt = DateTime.UtcNow.AddDays(-25),
-                UpdatedAt = DateTime.UtcNow.AddDays(-25),
-                IsActive = true
+                CreatedAt = DateTime.UtcNow.AddDays(-25)
             },
             new Course
             {
                 Id = _nextId++,
-                Title = "Database Design",
+                Name = "Database Design",
                 Description = "Learn database design principles and SQL",
-                Code = "DB201",
-                MaxCapacity = 20,
-                CreatedAt = DateTime.UtcNow.AddDays(-20),
-                UpdatedAt = DateTime.UtcNow.AddDays(-20),
-                IsActive = true
+                CreatedAt = DateTime.UtcNow.AddDays(-20)
             }
         };
 

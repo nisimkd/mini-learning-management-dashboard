@@ -1,0 +1,60 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build All Projects",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-c",
+				"cd '${workspaceFolder}\\LearningManagementDashboard.Api'; dotnet build; cd '${workspaceFolder}\\src'; npm run build"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$tsc",
+				"$msCompile"
+			]
+		},
+		{
+			"label": "Start Backend API",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-c",
+				"cd '${workspaceFolder}\\LearningManagementDashboard.Api'; dotnet run"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			]
+		},
+		{
+			"label": "Start Frontend",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-c",
+				"cd '${workspaceFolder}\\src'; npm start"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Run Tests",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-c",
+				"cd '${workspaceFolder}\\LearningManagementDashboard.Tests'; dotnet test"
+			],
+			"group": "test",
+			"problemMatcher": [
+				"$msCompile"
+			]
+		}
+	]
+}

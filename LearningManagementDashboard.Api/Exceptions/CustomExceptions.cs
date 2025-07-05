@@ -41,3 +41,31 @@ public class ValidationException : Exception
     {
     }
 }
+
+/// <summary>
+/// Exception thrown when a conflict occurs (e.g., trying to delete a resource that has dependencies)
+/// </summary>
+public class ConflictException : Exception
+{
+    public ConflictException(string message) : base(message)
+    {
+    }
+
+    public ConflictException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
+}
+
+/// <summary>
+/// Exception thrown when a bad request is made
+/// </summary>
+public class BadRequestException : Exception
+{
+    public BadRequestException(string message) : base(message)
+    {
+    }
+
+    public BadRequestException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
+}

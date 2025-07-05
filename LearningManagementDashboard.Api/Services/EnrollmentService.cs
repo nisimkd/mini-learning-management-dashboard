@@ -1,3 +1,5 @@
+using AutoMapper;
+using LearningManagementDashboard.Api.Constants;
 using LearningManagementDashboard.Api.DTOs;
 using LearningManagementDashboard.Api.Exceptions;
 using LearningManagementDashboard.Api.Models;
@@ -7,22 +9,25 @@ using LearningManagementDashboard.Api.Services.Interfaces;
 namespace LearningManagementDashboard.Api.Services;
 
 /// <summary>
-/// Service implementation for enrollment operations
+/// Service implementation for enrollment operations with AutoMapper integration
 /// </summary>
 public class EnrollmentService : IEnrollmentService
 {
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly IMapper _mapper;
 
     public EnrollmentService(
         IEnrollmentRepository enrollmentRepository,
         IStudentRepository studentRepository,
-        ICourseRepository courseRepository)
+        ICourseRepository courseRepository,
+        IMapper mapper)
     {
         _enrollmentRepository = enrollmentRepository;
         _studentRepository = studentRepository;
         _courseRepository = courseRepository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<EnrollmentDto>> GetAllEnrollmentsAsync()
@@ -37,7 +42,10 @@ public class EnrollmentService : IEnrollmentService
 
             if (student != null && course != null)
             {
-                enrollmentDtos.Add(MapToEnrollmentDto(enrollment, student, course));
+                var enrollmentDto = _mapper.Map<EnrollmentDto>(enrollment);
+                enrollmentDto.StudentName = student.FullName;
+                enrollmentDto.CourseName = course.Name;
+                enrollmentDtos.Add(enrollmentDto);
             }
         }
 
@@ -56,7 +64,10 @@ public class EnrollmentService : IEnrollmentService
         if (student == null || course == null)
             return null;
 
-        return MapToEnrollmentDto(enrollment, student, course);
+        var enrollmentDto = _mapper.Map<EnrollmentDto>(enrollment);
+        enrollmentDto.StudentName = student.FullName;
+        enrollmentDto.CourseName = course.Name;
+        return enrollmentDto;
     }
 
     public async Task<EnrollmentDto> CreateEnrollmentAsync(CreateEnrollmentDto createEnrollmentDto)
@@ -64,16 +75,12 @@ public class EnrollmentService : IEnrollmentService
         // Validate that student exists
         var student = await _studentRepository.GetByIdAsync(createEnrollmentDto.StudentId);
         if (student == null)
-            throw new NotFoundException($"Student with ID {createEnrollmentDto.StudentId} not found.");
+            throw new NotFoundException(ApiConstants.Messages.StudentNotFound);
 
         // Validate that course exists
         var course = await _courseRepository.GetByIdAsync(createEnrollmentDto.CourseId);
         if (course == null)
-            throw new NotFoundException($"Course with ID {createEnrollmentDto.CourseId} not found.");
-
-        // Check if course is active
-        if (!course.IsActive)
-            throw new BusinessRuleViolationException("Cannot enroll in an inactive course.");
+            throw new NotFoundException(ApiConstants.Messages.CourseNotFound);
 
         // Check if student is already enrolled
         var isAlreadyEnrolled = await _enrollmentRepository.IsStudentEnrolledAsync(
@@ -81,30 +88,24 @@ public class EnrollmentService : IEnrollmentService
             createEnrollmentDto.CourseId);
 
         if (isAlreadyEnrolled)
-            throw new BusinessRuleViolationException("Student is already enrolled in this course.");
+            throw new ConflictException(ApiConstants.Messages.StudentAlreadyEnrolled);
 
-        // Check if course has capacity
-        var currentEnrollments = await _enrollmentRepository.GetEnrollmentCountByCourseAsync(createEnrollmentDto.CourseId);
-        if (currentEnrollments >= course.MaxCapacity)
-            throw new BusinessRuleViolationException("Course has reached maximum capacity.");
-
-        // Create enrollment
-        var enrollment = new Enrollment
-        {
-            StudentId = createEnrollmentDto.StudentId,
-            CourseId = createEnrollmentDto.CourseId,
-            Status = EnrollmentStatus.Active
-        };
-
+        // Create enrollment using AutoMapper
+        var enrollment = _mapper.Map<Enrollment>(createEnrollmentDto);
+        
         var createdEnrollment = await _enrollmentRepository.CreateAsync(enrollment);
-        return MapToEnrollmentDto(createdEnrollment, student, course);
+        
+        var enrollmentDto = _mapper.Map<EnrollmentDto>(createdEnrollment);
+        enrollmentDto.StudentName = student.FullName;
+        enrollmentDto.CourseName = course.Name;
+        return enrollmentDto;
     }
 
     public async Task<bool> DeleteEnrollmentAsync(int id)
     {
         var enrollment = await _enrollmentRepository.GetByIdAsync(id);
         if (enrollment == null)
-            return false;
+            throw new NotFoundException(ApiConstants.Messages.EnrollmentNotFound);
 
         return await _enrollmentRepository.DeleteAsync(id);
     }
@@ -112,51 +113,27 @@ public class EnrollmentService : IEnrollmentService
     public async Task<IEnumerable<EnrollmentReportDto>> GenerateEnrollmentReportAsync()
     {
         var courses = await _courseRepository.GetAllAsync();
-        var reportDtos = new List<EnrollmentReportDto>();
-
+        var students = await _studentRepository.GetAllAsync();
+        
+        var courseEnrollments = new List<CourseEnrollmentDto>();
+        
         foreach (var course in courses)
         {
-            var enrollments = await _enrollmentRepository.GetByCourseIdAsync(course.Id);
-            var enrollmentList = enrollments.ToList();
-
-            var totalEnrollments = enrollmentList.Count;
-            var activeEnrollments = enrollmentList.Count(e => e.Status == EnrollmentStatus.Active);
-            var completedEnrollments = enrollmentList.Count(e => e.Status == EnrollmentStatus.Completed);
-            var droppedEnrollments = enrollmentList.Count(e => e.Status == EnrollmentStatus.Dropped);
-
-            var capacityUtilization = course.MaxCapacity > 0 
-                ? (decimal)activeEnrollments / course.MaxCapacity * 100 
-                : 0;
-
-            reportDtos.Add(new EnrollmentReportDto
+            var enrollmentCount = await _enrollmentRepository.GetEnrollmentCountByCourseAsync(course.Id);
+            courseEnrollments.Add(new CourseEnrollmentDto
             {
-                CourseId = course.Id,
-                CourseTitle = course.Title,
-                CourseCode = course.Code,
-                TotalEnrollments = totalEnrollments,
-                ActiveEnrollments = activeEnrollments,
-                CompletedEnrollments = completedEnrollments,
-                DroppedEnrollments = droppedEnrollments,
-                CapacityUtilization = Math.Round(capacityUtilization, 2)
+                CourseName = course.Name,
+                EnrolledStudentsCount = enrollmentCount
             });
         }
 
-        return reportDtos.OrderBy(r => r.CourseCode);
-    }
-
-    private static EnrollmentDto MapToEnrollmentDto(Enrollment enrollment, Student student, Course course)
-    {
-        return new EnrollmentDto
+        var report = new EnrollmentReportDto
         {
-            Id = enrollment.Id,
-            StudentId = enrollment.StudentId,
-            CourseId = enrollment.CourseId,
-            StudentName = student.FullName,
-            StudentEmail = student.Email,
-            CourseTitle = course.Title,
-            CourseCode = course.Code,
-            EnrollmentDate = enrollment.EnrollmentDate,
-            Status = enrollment.Status
+            TotalStudents = students.Count(),
+            TotalCourses = courses.Count(),
+            CourseEnrollments = courseEnrollments
         };
+
+        return new List<EnrollmentReportDto> { report };
     }
 }

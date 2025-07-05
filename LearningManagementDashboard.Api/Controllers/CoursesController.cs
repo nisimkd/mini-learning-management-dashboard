@@ -1,5 +1,6 @@
+using FluentValidation;
+using LearningManagementDashboard.Api.Constants;
 using LearningManagementDashboard.Api.DTOs;
-using LearningManagementDashboard.Api.Exceptions;
 using LearningManagementDashboard.Api.Models;
 using LearningManagementDashboard.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,19 @@ public class CoursesController : ControllerBase
 {
     private readonly ICourseService _courseService;
     private readonly ILogger<CoursesController> _logger;
+    private readonly IValidator<CreateCourseDto> _createCourseValidator;
+    private readonly IValidator<UpdateCourseDto> _updateCourseValidator;
 
-    public CoursesController(ICourseService courseService, ILogger<CoursesController> logger)
+    public CoursesController(
+        ICourseService courseService, 
+        ILogger<CoursesController> logger,
+        IValidator<CreateCourseDto> createCourseValidator,
+        IValidator<UpdateCourseDto> updateCourseValidator)
     {
         _courseService = courseService;
         _logger = logger;
+        _createCourseValidator = createCourseValidator;
+        _updateCourseValidator = updateCourseValidator;
     }
 
     /// <summary>
@@ -29,16 +38,8 @@ public class CoursesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IEnumerable<CourseDto>>>> GetAllCourses()
     {
-        try
-        {
-            var courses = await _courseService.GetAllCoursesAsync();
-            return Ok(ApiResponse<IEnumerable<CourseDto>>.SuccessResponse(courses));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while retrieving all courses");
-            return StatusCode(500, ApiResponse<IEnumerable<CourseDto>>.ErrorResponse("An error occurred while retrieving courses"));
-        }
+        var courses = await _courseService.GetAllCoursesAsync();
+        return Ok(ApiResponse<IEnumerable<CourseDto>>.SuccessResponse(courses, ApiConstants.Messages.Success));
     }
 
     /// <summary>
@@ -49,21 +50,13 @@ public class CoursesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<CourseDto>>> GetCourseById(int id)
     {
-        try
+        var course = await _courseService.GetCourseByIdAsync(id);
+        if (course == null)
         {
-            var course = await _courseService.GetCourseByIdAsync(id);
-            if (course == null)
-            {
-                return NotFound(ApiResponse<CourseDto>.ErrorResponse($"Course with ID {id} not found"));
-            }
+            return NotFound(ApiResponse<CourseDto>.ErrorResponse(ApiConstants.Messages.CourseNotFound));
+        }
 
-            return Ok(ApiResponse<CourseDto>.SuccessResponse(course));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while retrieving course with ID {CourseId}", id);
-            return StatusCode(500, ApiResponse<CourseDto>.ErrorResponse("An error occurred while retrieving the course"));
-        }
+        return Ok(ApiResponse<CourseDto>.SuccessResponse(course, ApiConstants.Messages.CourseRetrievedSuccessfully));
     }
 
     /// <summary>
@@ -74,24 +67,18 @@ public class CoursesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CourseDto>>> CreateCourse([FromBody] CreateCourseDto createCourseDto)
     {
-        try
+        // Validate the request
+        var validationResult = await _createCourseValidator.ValidateAsync(createCourseDto);
+        if (!validationResult.IsValid)
         {
-            var course = await _courseService.CreateCourseAsync(createCourseDto);
-            return CreatedAtAction(
-                nameof(GetCourseById),
-                new { id = course.Id },
-                ApiResponse<CourseDto>.SuccessResponse(course, "Course created successfully"));
+            return BadRequest(ApiResponse<CourseDto>.ErrorResponse(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
         }
-        catch (ValidationException ex)
-        {
-            _logger.LogWarning(ex, "Validation error while creating course");
-            return BadRequest(ApiResponse<CourseDto>.ErrorResponse(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while creating course");
-            return StatusCode(500, ApiResponse<CourseDto>.ErrorResponse("An error occurred while creating the course"));
-        }
+
+        var course = await _courseService.CreateCourseAsync(createCourseDto);
+        return CreatedAtAction(
+            nameof(GetCourseById),
+            new { id = course.Id },
+            ApiResponse<CourseDto>.SuccessResponse(course, ApiConstants.Messages.CourseCreatedSuccessfully));
     }
 
     /// <summary>
@@ -103,31 +90,20 @@ public class CoursesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<CourseDto>>> UpdateCourse(int id, [FromBody] UpdateCourseDto updateCourseDto)
     {
-        try
+        // Validate the request
+        var validationResult = await _updateCourseValidator.ValidateAsync(updateCourseDto);
+        if (!validationResult.IsValid)
         {
-            var course = await _courseService.UpdateCourseAsync(id, updateCourseDto);
-            if (course == null)
-            {
-                return NotFound(ApiResponse<CourseDto>.ErrorResponse($"Course with ID {id} not found"));
-            }
+            return BadRequest(ApiResponse<CourseDto>.ErrorResponse(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+        }
 
-            return Ok(ApiResponse<CourseDto>.SuccessResponse(course, "Course updated successfully"));
-        }
-        catch (ValidationException ex)
+        var course = await _courseService.UpdateCourseAsync(id, updateCourseDto);
+        if (course == null)
         {
-            _logger.LogWarning(ex, "Validation error while updating course with ID {CourseId}", id);
-            return BadRequest(ApiResponse<CourseDto>.ErrorResponse(ex.Message));
+            return NotFound(ApiResponse<CourseDto>.ErrorResponse(ApiConstants.Messages.CourseNotFound));
         }
-        catch (BusinessRuleViolationException ex)
-        {
-            _logger.LogWarning(ex, "Business rule violation while updating course with ID {CourseId}", id);
-            return BadRequest(ApiResponse<CourseDto>.ErrorResponse(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while updating course with ID {CourseId}", id);
-            return StatusCode(500, ApiResponse<CourseDto>.ErrorResponse("An error occurred while updating the course"));
-        }
+
+        return Ok(ApiResponse<CourseDto>.SuccessResponse(course, ApiConstants.Messages.CourseUpdatedSuccessfully));
     }
 
     /// <summary>
@@ -138,25 +114,7 @@ public class CoursesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteCourse(int id)
     {
-        try
-        {
-            var result = await _courseService.DeleteCourseAsync(id);
-            if (!result)
-            {
-                return NotFound(ApiResponse<bool>.ErrorResponse($"Course with ID {id} not found"));
-            }
-
-            return Ok(ApiResponse<bool>.SuccessResponse(true, "Course deleted successfully"));
-        }
-        catch (BusinessRuleViolationException ex)
-        {
-            _logger.LogWarning(ex, "Business rule violation while deleting course with ID {CourseId}", id);
-            return BadRequest(ApiResponse<bool>.ErrorResponse(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while deleting course with ID {CourseId}", id);
-            return StatusCode(500, ApiResponse<bool>.ErrorResponse("An error occurred while deleting the course"));
-        }
+        var result = await _courseService.DeleteCourseAsync(id);
+        return Ok(ApiResponse<bool>.SuccessResponse(result, ApiConstants.Messages.CourseDeletedSuccessfully));
     }
 }

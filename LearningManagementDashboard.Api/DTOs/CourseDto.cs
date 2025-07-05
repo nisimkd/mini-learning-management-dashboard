@@ -6,24 +6,14 @@ namespace LearningManagementDashboard.Api.DTOs;
 public class CreateCourseDto
 {
     /// <summary>
-    /// Course title
+    /// Course name
     /// </summary>
-    public string Title { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Course description
     /// </summary>
     public string Description { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Course code (e.g., "CS101")
-    /// </summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Maximum number of students that can enroll in the course
-    /// </summary>
-    public int MaxCapacity { get; set; }
 }
 
 /// <summary>
@@ -32,29 +22,14 @@ public class CreateCourseDto
 public class UpdateCourseDto
 {
     /// <summary>
-    /// Course title
+    /// Course name
     /// </summary>
-    public string Title { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Course description
     /// </summary>
     public string Description { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Course code (e.g., "CS101")
-    /// </summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Maximum number of students that can enroll in the course
-    /// </summary>
-    public int MaxCapacity { get; set; }
-
-    /// <summary>
-    /// Whether the course is currently active
-    /// </summary>
-    public bool IsActive { get; set; }
 }
 
 /// <summary>
@@ -68,9 +43,9 @@ public class CourseDto
     public int Id { get; set; }
 
     /// <summary>
-    /// Course title
+    /// Course name
     /// </summary>
-    public string Title { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Course description
@@ -78,32 +53,12 @@ public class CourseDto
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Course code
-    /// </summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Maximum capacity
-    /// </summary>
-    public int MaxCapacity { get; set; }
-
-    /// <summary>
     /// Number of currently enrolled students
     /// </summary>
     public int EnrolledStudents { get; set; }
 
     /// <summary>
-    /// Whether the course is active
-    /// </summary>
-    public bool IsActive { get; set; }
-
-    /// <summary>
     /// Creation date
     /// </summary>
     public DateTime CreatedAt { get; set; }
-
-    /// <summary>
-    /// Last update date
-    /// </summary>
-    public DateTime UpdatedAt { get; set; }
 }

@@ -49,14 +49,9 @@ public class EnrollmentDto
     public string StudentEmail { get; set; } = string.Empty;
 
     /// <summary>
-    /// Course title
+    /// Course name
     /// </summary>
-    public string CourseTitle { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Course code
-    /// </summary>
-    public string CourseCode { get; set; } = string.Empty;
+    public string CourseName { get; set; } = string.Empty;
 
     /// <summary>
     /// Enrollment date
@@ -75,42 +70,33 @@ public class EnrollmentDto
 public class EnrollmentReportDto
 {
     /// <summary>
-    /// Course identifier
+    /// Total number of students
     /// </summary>
-    public int CourseId { get; set; }
+    public int TotalStudents { get; set; }
 
     /// <summary>
-    /// Course title
+    /// Total number of courses
     /// </summary>
-    public string CourseTitle { get; set; } = string.Empty;
+    public int TotalCourses { get; set; }
 
     /// <summary>
-    /// Course code
+    /// Course enrollment details
     /// </summary>
-    public string CourseCode { get; set; } = string.Empty;
+    public List<CourseEnrollmentDto> CourseEnrollments { get; set; } = new();
+}
+
+/// <summary>
+/// Data transfer object for course enrollment details
+/// </summary>
+public class CourseEnrollmentDto
+{
+    /// <summary>
+    /// Course name
+    /// </summary>
+    public string CourseName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Total number of enrolled students
+    /// Number of enrolled students
     /// </summary>
-    public int TotalEnrollments { get; set; }
-
-    /// <summary>
-    /// Number of active enrollments
-    /// </summary>
-    public int ActiveEnrollments { get; set; }
-
-    /// <summary>
-    /// Number of completed enrollments
-    /// </summary>
-    public int CompletedEnrollments { get; set; }
-
-    /// <summary>
-    /// Number of dropped enrollments
-    /// </summary>
-    public int DroppedEnrollments { get; set; }
-
-    /// <summary>
-    /// Course capacity utilization percentage
-    /// </summary>
-    public decimal CapacityUtilization { get; set; }
+    public int EnrolledStudentsCount { get; set; }
 }
