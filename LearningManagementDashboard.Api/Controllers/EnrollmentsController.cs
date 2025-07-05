@@ -1,3 +1,9 @@
+using LearningManagementDashboard.Api.DTOs;
+using LearningManagementDashboard.Api.Exceptions;
+using LearningManagementDashboard.Api.Models;
+using LearningManagementDashboard.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
 namespace LearningManagementDashboard.Api.Controllers;
 
 /// <summary>
