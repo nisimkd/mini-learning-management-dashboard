@@ -1,46 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Enrollment, Course, Student, LoadingState } from '../types';
-import { courseApi, studentApi, enrollmentApi } from '../services/api';
+import { useEnrollments, useEnrollmentOperations } from '../hooks/useEnrollments';
+import { useCourses } from '../hooks/useCourses';
+import { useStudents } from '../hooks/useStudents';
 import './Enrollments.css';
 
 const Enrollments: React.FC = () => {
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState<LoadingState>({
-    isLoading: true,
-    error: null,
-  });
+  // Custom hooks
+  const { enrollments, isLoading: enrollmentsLoading, error: enrollmentsError, refetch: refetchEnrollments } = useEnrollments();
+  const { courses, isLoading: coursesLoading } = useCourses();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { deleteEnrollment, isDeleting } = useEnrollmentOperations();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading({ isLoading: true, error: null });
-      
-      const [enrollmentsData, coursesData, studentsData] = await Promise.all([
-        enrollmentApi.getAll(),
-        courseApi.getAll(),
-        studentApi.getAll(),
-      ]);
-      
-      setEnrollments(enrollmentsData);
-      setCourses(coursesData);
-      setStudents(studentsData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading({ 
-        isLoading: false, 
-        error: 'Failed to load enrollments data. Please try again.' 
-      });
-      return;
-    }
-    
-    setLoading({ isLoading: false, error: null });
-  };
+  const loading = enrollmentsLoading || coursesLoading || studentsLoading;
+  const error = enrollmentsError;
 
   const handleDeleteEnrollment = async (enrollmentId: number) => {
     if (!window.confirm('Are you sure you want to delete this enrollment?')) {
@@ -48,11 +21,11 @@ const Enrollments: React.FC = () => {
     }
 
     try {
-      await enrollmentApi.delete(enrollmentId);
-      setEnrollments(enrollments.filter(e => e.id !== enrollmentId));
+      await deleteEnrollment(enrollmentId);
+      await refetchEnrollments(); // Refresh the enrollments list
     } catch (error) {
       console.error('Error deleting enrollment:', error);
-      alert('Failed to delete enrollment. Please try again.');
+      // Error handling is done by the custom hook with toast notifications
     }
   };
 
@@ -66,7 +39,7 @@ const Enrollments: React.FC = () => {
     return student ? student.fullName : `Student #${studentId}`;
   };
 
-  if (loading.isLoading) {
+  if (loading) {
     return (
       <div className="enrollments-page">
         <div className="loading-spinner">
@@ -77,13 +50,13 @@ const Enrollments: React.FC = () => {
     );
   }
 
-  if (loading.error) {
+  if (error) {
     return (
       <div className="enrollments-page">
         <div className="error-message">
           <h3>Error Loading Enrollments</h3>
-          <p>{loading.error}</p>
-          <button onClick={fetchData} className="retry-button">
+          <p>{error}</p>
+          <button onClick={refetchEnrollments} className="retry-button">
             Retry
           </button>
         </div>

@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CreateEnrollmentDto, Course, Student, FormErrors } from '../../types';
-import { courseApi, studentApi, enrollmentApi } from '../../services/api';
+import { useCourses } from '../../hooks/useCourses';
+import { useStudents } from '../../hooks/useStudents';
+import { useEnrollmentOperations } from '../../hooks/useEnrollments';
 import './EnrollmentForm.css';
 
 const EnrollmentForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
+  
+  // Custom hooks
+  const { courses, isLoading: coursesLoading } = useCourses();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { createEnrollment, isCreating } = useEnrollmentOperations();
   
   // Get pre-selected student ID from URL params
   const urlParams = new URLSearchParams(location.search);
@@ -21,27 +25,7 @@ const EnrollmentForm: React.FC = () => {
     courseId: 0
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [coursesData, studentsData] = await Promise.all([
-        courseApi.getAll(),
-        studentApi.getAll(),
-      ]);
-      
-      setCourses(coursesData);
-      setStudents(studentsData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setErrors({ general: 'Failed to load courses and students' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = coursesLoading || studentsLoading || isCreating;
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -66,16 +50,12 @@ const EnrollmentForm: React.FC = () => {
     }
 
     try {
-      setLoading(true);
       setErrors({});
-
-      await enrollmentApi.create(formData);
+      await createEnrollment(formData);
       navigate('/enrollments');
     } catch (error) {
       console.error('Error creating enrollment:', error);
       setErrors({ general: 'Failed to create enrollment. Please try again.' });
-    } finally {
-      setLoading(false);
     }
   };
 
